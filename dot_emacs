@@ -1,0 +1,110 @@
+(desktop-read)
+(set-face-attribute 'default nil :height 160)
+(require 'package)
+(setq package-archives '(("melpa" . "http://melpa.org/packages/")
+			 ("nongnu" . "https://elpa.nongnu.org/nongnu")
+                         ("gnu" . "http://elpa.gnu.org/packages/")))
+
+;; (package-initialize)
+;; (package-refresh-contents)
+
+(setq make-backup-files nil)                ;; Stop creating backup files
+(setq auto-save-default nil)                 ;; Stop auto-saving files
+(global-display-line-numbers-mode 1)        ;; Enable line numbers globally
+(setq column-number-mode 1)
+(desktop-save-mode 1)                       ;; Enable desktop save mode
+(add-to-list 'warning-suppress-types '(undo discard-info))
+
+;; Save desktop on exit
+(setq desktop-save 'if-exists)  ;; Save if it exists; don’t overwrite an existing desktop file
+(setq desktop-load-locked-desktop nil)  ;; Load a locked desktop if it exists
+
+;; Define the idle time (in seconds) before auto-save
+(setq idle-time 10)  ;; Adjust this value as needed
+
+;; Function to save the desktop
+(defun my-auto-save-desktop ()
+  (when (and (not (string= (buffer-name) "*scratch*"))
+             (not (minibufferp)))
+    (desktop-save-in-desktop-dir)))
+
+;; Set up the idle timer
+(run-with-idle-timer idle-time t 'my-auto-save-desktop)
+
+;; Use eglot in every buffer that it can work
+;; Ensure you have eglot installed
+(unless (package-installed-p 'eglot)
+  (package-refresh-contents)
+  (package-install 'eglot))
+
+;; Enable eglot globally
+(add-hook 'prog-mode-hook 'eglot-ensure)      ;; Ensure eglot starts in programming modes
+(add-hook 'text-mode-hook 'eglot-ensure)      ;; Ensure eglot starts in text modes as well, if applicable
+
+(unless (package-installed-p 'rust-mode)
+  (package-refresh-contents)
+  (package-install 'rust-mode))
+
+;; Ensure 'use-package' is installed
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+(require 'use-package)
+(unless (package-installed-p 'rustic)
+  (package-refresh-contents)
+  (package-install 'rustic))
+
+;;;https://www.flycheck.org/en/latest/user/installation.html#flycheck-installation
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
+(unless (package-installed-p 'company)
+  (package-refresh-contents)
+  (package-install 'company))
+(require 'rust-mode)
+(define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
+(setq company-tooltip-align-annotations t)
+
+;; Enable hs-minor-mode in programming modes
+(defun my-hs-minor-mode-setup ()
+  "Enable hs-minor-mode for programming mode buffers."
+  (when (derived-mode-p 'prog-mode) ; Enables for all programming modes
+    (hs-minor-mode 1)))
+
+;; Add hook to enable hs-minor-mode in all programming modes
+(add-hook 'prog-mode-hook 'my-hs-minor-mode-setup)
+
+;; Optionally, you can enable hs-minor-mode in additional modes
+(defun my-hs-minor-mode-setup-custom ()
+  "Custom hook for enabling hs-minor-mode in specific modes."
+  (hs-minor-mode 1))
+(add-hook 'emacs-lisp-mode-hook 'my-hs-minor-mode-setup-custom)
+(add-hook 'c-mode-hook 'my-hs-minor-mode-setup-custom)
+(add-hook 'c++-mode-hook 'my-hs-minor-mode-setup-custom)
+(add-hook 'python-mode-hook 'my-hs-minor-mode-setup-custom)
+;; Add more modes as needed
+
+
+;;https://rustrepo.com/repo/rust-lang-rust-mode-rust-ides#indentation
+;; Commands like TAB should indent correctly.
+;; The Rust style guide recommends spaces rather than tabs for
+;; indentation; to follow the recommendation add this to your init.el,
+;; which forces indentation to always use spaces.
+(add-hook 'rust-mode-hook
+          (lambda () (setq indent-tabs-mode nil)))
+
+
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages nil))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
